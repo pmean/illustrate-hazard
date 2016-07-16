@@ -1,0 +1,75 @@
+---
+title: "Illustrating the hazard function"
+author: "Steve Simon"
+date: "Friday, July 15, 2016"
+output: html_document
+---
+
+This program shows a simple example of the hazard function.n R code chunk like this:
+
+```{r weibull_density}
+age <- seq(1, 100, by=1)
+age <- round(age, 1)
+density <- dweibull(age, 2, 35)
+plot(age, density, type="l")
+```
+
+Here is a probability density function that might represent the
+survival probability for an individual. It is simple from a 
+mathematical perspective, but may not reflect actual survival
+probabilities for a realistic individual.
+
+In a density function, probabilities are computed by measuring
+the area under the curve. So the probability that you will die
+between ages 20 and 30 is
+
+```{r area_1}
+pct <- function(x) (paste(round(100*x), "%", sep=""))
+plot(age, density, type="l")
+age1 <- 20
+age2 <- 30
+age_mean <- (age1+age2) / 2
+segments(age1, 0, age1, density[age==age1])
+segments(age2, 0, age2, density[age==age2])
+age_range <- (age>=age1) & (age<=age2)
+polygon(x=c(age2, age1, age[age_range]), y=c(0, 0, density[age_range]), border=NA, col="gray")
+probability <- pweibull(age2, 2, 35) - pweibull(age1, 2, 35)
+text(age_mean, 0.5*density[age==age_mean], pct(probability))
+```
+
+The probability that you will die between ages 40 and 60 is
+
+```{r area_2}
+plot(age, density, type="l")
+age1 <- 40
+age2 <- 60
+age_mean <- (age1+age2) / 2
+segments(age1, 0, age1, density[age==age1])
+segments(age2, 0, age2, density[age==age2])
+age_range <- (age>=age1) & (age<=age2)
+polygon(x=c(age2, age1, age[age_range]), y=c(0, 0, density[age_range]), border=NA, col="gray")
+probability <- pweibull(age2, 2, 35) - pweibull(age1, 2, 35)
+text(age_mean, 0.5*density[age==age_mean], pct(probability))
+```
+
+and the probability that you will die after age 80 is 
+
+```{r area_3}
+plot(age, density, type="l")
+age1 <- 80
+age2 <- 100
+age_mean <- (age1+age2) / 2
+segments(age1, 0, age1, density[age==age1])
+segments(age2, 0, age2, density[age==age2])
+age_range <- (age>=age1) & (age<=age2)
+polygon(x=c(age2, age1, age[age_range]), y=c(0, 0, density[age_range]), border=NA, col="gray")
+probability <- pweibull(age2, 2, 35) - pweibull(age1, 2, 35)
+text(age_mean, 10*density[age==age_mean], pct(probability))
+```
+
+```{r bars}
+yearly_probability <- pweibull(age, 2, 35)-c(0,pweibull(age[-100], 2, 35))
+sum(yearly_probability)
+plot(age,yearly_probability,type="s")
+segments(age, 0, age, yearly_probability)
+```
