@@ -21,7 +21,7 @@ probabilities for a realistic individual.
 
 In a density function, probabilities are computed by measuring
 the area under the curve. So the probability that you will die
-between ages 20 and 30 is
+as a young adult (between ages 20 and 30) is
 
 ```{r area_1}
 pct <- function(x) (paste(round(100*x), "%", sep=""))
@@ -33,39 +33,74 @@ segments(age1, 0, age1, density[age==age1])
 segments(age2, 0, age2, density[age==age2])
 age_range <- (age>=age1) & (age<=age2)
 polygon(x=c(age2, age1, age[age_range]), y=c(0, 0, density[age_range]), border=NA, col="gray")
-probability <- pweibull(age2, 2, 35) - pweibull(age1, 2, 35)
+p1 <- pweibull(age1, 2, 35)
+p2 <- pweibull(age2, 2, 35)
+probability <- p2 - p1
 text(age_mean, 0.5*density[age==age_mean], pct(probability))
 ```
 
-The probability that you will die between ages 40 and 60 is
+The probability that you will die as a middle aged adult 
+(between ages 40 and 60) is
 
 ```{r area_2}
 plot(age, density, type="l")
-age1 <- 40
-age2 <- 60
-age_mean <- (age1+age2) / 2
-segments(age1, 0, age1, density[age==age1])
-segments(age2, 0, age2, density[age==age2])
-age_range <- (age>=age1) & (age<=age2)
-polygon(x=c(age2, age1, age[age_range]), y=c(0, 0, density[age_range]), border=NA, col="gray")
-probability <- pweibull(age2, 2, 35) - pweibull(age1, 2, 35)
+age3 <- 40
+age4 <- 70
+age_mean <- (age3+age4) / 2
+segments(age3, 0, age3, density[age==age3])
+segments(age4, 0, age4, density[age==age4])
+age_range <- (age>=age3) & (age<=age4)
+polygon(x=c(age4, age3, age[age_range]), y=c(0, 0, density[age_range]), border=NA, col="gray")
+p3 <- pweibull(age3, 2, 35)
+p4 <- pweibull(age4, 2, 35)
+probability <- p4 - p3
 text(age_mean, 0.5*density[age==age_mean], pct(probability))
 ```
+Now these are interesting probabilities, but they are not directly comparable for two reasons.
 
-and the probability that you will die after age 80 is 
+1. The probabilities are over different time frames.
 
-```{r area_3}
-plot(age, density, type="l")
-age1 <- 80
-age2 <- 100
-age_mean <- (age1+age2) / 2
-segments(age1, 0, age1, density[age==age1])
-segments(age2, 0, age2, density[age==age2])
-age_range <- (age>=age1) & (age<=age2)
-polygon(x=c(age2, age1, age[age_range]), y=c(0, 0, density[age_range]), border=NA, col="gray")
-probability <- pweibull(age2, 2, 35) - pweibull(age1, 2, 35)
-text(age_mean, 10*density[age==age_mean], pct(probability))
+2. The probabilities should be adjusted to account for the smaller number of survivors at the older ages.
+
+To fix the first problem, you need to look at the rate of death. This is the number of deaths
+per million people divided by the number of days in the time interval. The choice of a 
+million people instead of, say 10 thousand, and the choice of days instead of say, months
+or years, is a bit arbitrary. But as long as you are consistent, the comparisons are fairer.
+
+To fix the second problem, you need to adjust the rate by the number of people who have survived
+up to age 18, 40, or 70.
+
+```{r basic calculations, echo=FALSE}
+f1 <- round(10000*(p2-p1))
+d1 <- 365*(age2-age1) + (age2-age1) %/% 4
+r1 <- round(f1/d1, 2)
+x1 <- round(10000*p1)
+y1 <- 10000 - x1
+h1 <- round(r1 * 10000 / y1, 2)
+
+f3 <- round(10000*(p4-p3))
+d3 <- 365*(age4-age3) + (age4-age3) %/% 4
+r3 <- round(f3/d3, 2)
+x3 <- round(10000*p3)
+y3 <- 10000 - x3
+h3 <- round(r3 * 10000 / y3, 2)
 ```
+
+If you have 10,000 people, you'd see `r f1` funerals between the ages of 
+`r age1` and `r age2` and since there are `r d1` days in this interval,
+you'd have a rate of `r r1` (`r f1` / `r d1`) funerals per day. But
+of ten thousand people, there would be `r x1` who died before age `r age1` and
+`r y1` survivors. So the rate among 10,000 people alive at age `r age1` is 
+`r h1` (`r r1`*10000 / `r y1`) funerals per day.
+ 
+Middle aged adults (`r age3`-`r age4`) have about the same probability, but
+it's over a longer period of time. Counterbalancing this, there are not quite
+as many people who survive to 40. Here's the math.
+ 
+For 10,000 people, you'd see `r f3` funerals over a span of `r d3` days. That's
+a rate of `r r3` (`r f3` / `r d3`) funerals per day. There were `r x3` deaths
+before age `r age3` and `r y3` survivors. So the rate among 10,000 people alive
+at age `r age3` is `r h3` (`r r3`*10000 / `r y3`) funerals per day.
 
 ```{r bars}
 yearly_probability <- pweibull(age, 2, 35)-c(0,pweibull(age[-100], 2, 35))
