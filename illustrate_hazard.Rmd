@@ -165,5 +165,6 @@ new machine performs no better or no worse than a used machine.
 
 Another common pattern for the hazard rate is called the bathtub hazard. This is a
 hazard that starts out high early, decreases, flattens out for a while and then
-gradually increases later in life.
+gradually increases later in life. The bathtub hazard is the one that most closely
+resembles the human experience.
 
