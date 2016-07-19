@@ -40,7 +40,7 @@ text(age_mean, 0.5*density[age==age_mean], pct(probability))
 ```
 
 The probability that you will die as a middle aged adult 
-(between ages 40 and 60) is
+(between ages 40 and 70) is
 
 ```{r area_2}
 plot(age, density, type="l")
@@ -102,9 +102,68 @@ a rate of `r r3` (`r f3` / `r d3`) funerals per day. There were `r x3` deaths
 before age `r age3` and `r y3` survivors. So the rate among 10,000 people alive
 at age `r age3` is `r h3` (`r r3`*10000 / `r y3`) funerals per day.
 
-```{r bars}
-yearly_probability <- pweibull(age, 2, 35)-c(0,pweibull(age[-100], 2, 35))
-sum(yearly_probability)
-plot(age,yearly_probability,type="s")
-segments(age, 0, age, yearly_probability)
+The hazard rate is defined in a similar way. 
+
+h(t) = (P[t $\le$ T $\le$ T+$\Delta$t] / $\Delta$t) / P[T $\ge$ t]
+
+where $\Delta$t is very small.
+
+It's a rate since it involves a measure of time, so the hazard rate does not
+necessarily have to be bounded between 0 and 1 like a probability would be.
+
+The hazard rate is mathematically equivalent to the density function divided 
+by the survival function. You need some basic calculus to establish this
+
+```{r trio}
+plot(age, density, type="l")
+title("Density")
+survival_probability <- 1 - pweibull(age, 2, 35)
+plot(age, survival_probability, type="l")
+title("Survival")
+plot(age, density / survival_probability, type="l")
+title("Hazard rate")
 ```
+
+This is an example of an increasing hazard rate. Your death rate is low at any 
+particular time point, but the rate increases over time. People
+who talk about survival with respect to machines refer to this 
+as "new better than used."
+
+There are examples of a decreasing hazard rate or "used better than new." 
+
+```{r decreasing hazard}
+density <- dweibull(age, 0.5, 140)
+plot(age, density, type="l")
+title("Density")
+survival_probability <- 1 - pweibull(age, 0.5, 140)
+plot(age, survival_probability, type="l")
+title("Survival")
+plot(age, density / survival_probability, type="l")
+title("Hazard rate")
+```
+
+This is reminiscent of the Nietzsche quote "That which does not kill us makes
+us stronger." This does not mean that you'll never die, but your short term risk
+of dying is greatest when you are young and small. From the engineering perspective
+if a machine has a decreasing haard rate, that means that it gets battle
+hardened as it get older and becomes more reliable over time.
+
+```{r constant hazard}
+density <- dexp(age, rate=1/70)
+plot(age, density, type="l")
+title("Density")
+survival_probability <- 1 - pexp(age, rate=1/70)
+plot(age, survival_probability, type="l")
+title("Survival")
+plot(age, density / survival_probability, type="l")
+title("Hazard rate")
+```
+
+The exponential distribution is said to have a "memoryless" property. What this
+means is that the short term risk of death is unrelated to age. In other words a
+new machine performs no better or no worse than a used machine.
+
+Another common pattern for the hazard rate is called the bathtub hazard. This is a
+hazard that starts out high early, decreases, flattens out for a while and then
+gradually increases later in life.
+
