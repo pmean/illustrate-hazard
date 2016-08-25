@@ -168,3 +168,80 @@ hazard that starts out high early, decreases, flattens out for a while and then
 gradually increases later in life. The bathtub hazard is the one that most closely
 resembles the human experience.
 
+You can find a nice illustration of the bathtub hazrd at
+
+https://commons.wikimedia.org/wiki/File:Bathtub_curve.svg
+
+## Why is the hazard function important?
+
+1. Knowledge of the hazard function for an industrial product can help you decide on how and when to employ preventive maintenance. 
+
+2. It can also help you extrapolate survival patterns beyond the range of observed values, such as for long-term reliability testing.
+
+3. If you are planning a new research study, the hazard function can help you decide how many patients to study and the length of follow-up for these patients.
+
+4. Assumptions about the hazard function are critical for regression models of survival.
+
+## The heroin data set.
+
+On the Australian Data and Story Library website, you can find a data set on the amount of time that a patient spens in a rehabilitation clinic. You can read a description of the data at
+
+--> http://www.statsci.org/data/oz/heroin.html
+
+and the tab delimited data is at
+
+--> http://www.statsci.org/data/oz/heroin.txt
+
+Note that for this study, a small time-to-event is good.
+
+```{r read}
+me_raw <- read.table("heroin.txt", header=TRUE)
+head(me_raw)
+m1 <- me_raw[ , 1:6]
+m2 <- me_raw[ , 7:12]
+names(m2) <- names(m1)
+me <- rbind(m1, m2)
+head(me)
+tail(me)
+dim(me)
+summary(me$Time)
+summary(me$Dose)
+table(me$Dose)
+table(me$Clinic)
+table(me$Status)
+table(me$Prison.)
+```
+
+In R, the default is that 0 represents a censored value and 1 represents an event.
+
+Before you fit a Cox proportional hazards model, you should look at the Kaplan-Meier curve and the logrank test.
+
+```{r survival}
+library("survival")
+su <- Surv(me$Time, me$Status)
+print(su)
+plot(survfit(su~1))
+quantile(survfit(su~1))
+
+plot(survfit(su~me$Clinic))
+quantile(survfit(su~me$Clinic))
+survdiff(su~me$Clinic)
+
+plot(survfit(su~me$Prison.))
+quantile(survfit(su~me$Prison.))
+survdiff(su~me$Prison.)
+
+dose_quartiles <- cut(me$Dose, c(0, 50, 60, 70, 999))
+plot(survfit(su~dose_quartiles))
+quantile(survfit(su~dose_quartiles))
+survdiff(su~dose_quartiles)
+```
+
+The Cox proportional hazards model allows a lot more flexibility than the logrank test. You can include a continuous predictor variable (no need to create quartiles for dose) and multiple predictors (allowing for a risk adjusted model, for example).
+
+```{r cox}
+coxph(su~me$Prison.)
+coxph(su~dose_quartiles)
+coxph(su~me$Dose)
+coxph(su~strata(me$Clinic)+me$Prison.+me$Dose)
+```
