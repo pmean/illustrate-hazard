@@ -5,7 +5,11 @@ date: "Friday, July 15, 2016"
 output: html_document
 ---
 
-This program shows a simple example of the hazard function.n R code chunk like this:
+## Abstract
+
+When you have data measuring the time to an event, you can examine the relationship between various predictor variables and the time to the event using a Cox proportional hazards model. In this talk, you will see what a hazard function is and describe the interpretations of increasing, decreasing, and constant hazard. Then you will examine the log rank test, a simple test closely tied to the Kaplan-Meier curve, and the Cox proportional hazards model.
+
+## What is the hazard function?
 
 ```{r weibull_density}
 age <- seq(1, 100, by=1)
@@ -44,7 +48,7 @@ The probability that you will die as a middle aged adult
 
 ```{r area_2}
 plot(age, density, type="l")
-age3 <- 40
+age3 <- 40 
 age4 <- 70
 age_mean <- (age3+age4) / 2
 segments(age3, 0, age3, density[age==age3])
@@ -56,6 +60,7 @@ p4 <- pweibull(age4, 2, 35)
 probability <- p4 - p3
 text(age_mean, 0.5*density[age==age_mean], pct(probability))
 ```
+
 Now these are interesting probabilities, but they are not directly comparable for two reasons.
 
 1. The probabilities are over different time frames.
@@ -237,6 +242,30 @@ quantile(survfit(su~dose_quartiles))
 survdiff(su~dose_quartiles)
 ```
 
+Here's how you calculate the log rank test
+
+```{r hand-calculation}
+library("tibble")
+tb <- table(me$Time[me$Status==1], me$Prison.[me$Status==1])
+tim <- as.numeric(dimnames(tb)[[1]])
+o1j <- tb[, 1]
+o2j <- tb[, 2]
+oj <- o1j+o2j
+n1j <- rep(NA, length(tim))
+n2j <- rep(NA, length(tim))
+for (j in 1:length(tim)) {
+  n1j[j] <- sum(me$Time[me$Prison.==0]>=tim[j])
+  n2j[j] <- sum(me$Time[me$Prison.==1]>=tim[j])
+}
+nj <- n1j+n2j
+pj <- round(n1j/nj, 2)
+e1j <- round(oj*pj, 2)
+v1j <- round(oj*pj*(1-pj) * (nj-oj)/(nj-1), 2)
+tail(tibble(tim, o1j, o2j, oj, n1j, n2j, nj, pj, e1j, v1j))
+logrank_z <- sum(o1j-e1j) / sqrt(sum(v1j))
+logrank_x2 <- logrank_z^2
+```
+
 The Cox proportional hazards model allows a lot more flexibility than the logrank test. You can include a continuous predictor variable (no need to create quartiles for dose) and multiple predictors (allowing for a risk adjusted model, for example).
 
 ```{r cox}
@@ -245,3 +274,10 @@ coxph(su~dose_quartiles)
 coxph(su~me$Dose)
 coxph(su~strata(me$Clinic)+me$Prison.+me$Dose)
 ```
+
+Save everything for later re-use
+
+```{r save-everything}
+save.image("illustrate_hazard.RData")
+```
+
